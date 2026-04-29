@@ -30,8 +30,35 @@ outputs:
   latestVersionNameWithoutStage:
     description: "Version Name without stage"
 runs:
-  using: "node16"
-  main: "index.js"
-branding:
-  color: 'blue'
-  icon: 'anchor'
+  using: "composite"
+  steps:
+    - name: Set up Node.js 24
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24
+
+    - name: Cache node modules
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.action_path }}/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles(format('{0}/package-lock.json', github.action_path)) }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Install dependencies
+      shell: bash
+      run: npm install --production
+      working-directory: ${{ github.action_path }}
+
+    - name: Run action
+      shell: bash
+      run: node ${{ github.action_path }}/index.js
+      env:
+        INPUT_GRADLEPATH: ${{ inputs.gradlePath }}
+        INPUT_VERSIONCODE: ${{ inputs.versionCode }}
+        INPUT_VERSIONCODELIMITER: ${{ inputs.versionCodeLimiter }}
+        INPUT_VERSIONNAME: ${{ inputs.versionName }}
+        INPUT_VERSIONSTAGE: ${{ inputs.versionStage }}
+        INPUT_VERSIONMETAINFO: ${{ inputs.versionMetaInfo }}
+        GITHUB_OUTPUT: ${{ github.output }}
+        GITHUB_STATE: ${{ github.state }}
